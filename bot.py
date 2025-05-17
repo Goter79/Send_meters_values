@@ -5,7 +5,7 @@ from config import TOKEN;
 bot = telebot.TeleBot(TOKEN);
 
 name = "";  
-surname = "";
+surname = " ";
 age = "";
 @bot.message_handler(content_types=["text"])
 def start(message):
