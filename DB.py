@@ -80,7 +80,7 @@ def List_IPU(message):
     
     # пустая строка для данных
     s = ''
-    sql="SELECT id_meter, LS, Number, value, value_old  FROM Meter_Measure"
+    sql="SELECT id_meter, LS, Number, value, value_old  FROM Meter_Measure limit 10"
     print(sql)
      # работаем с базой
      
@@ -110,13 +110,14 @@ def Find_LS(message):
 		# подключаемся к базе
 		con = sl.connect('reports.db')   
 
-		keyboard = types.InlineKeyboardMarkup() #Инлайн клавиатура
-		# keyboard.row_width = 2	
+		keyboard = types.InlineKeyboardMarkup(row_width=2) #Инлайн клавиатура
+		
+        
 		# пустая строка для данных
 		s = ''
 		LS=str(message.text) 
-		sql="SELECT id_meter, LS, Number, value, value_old  FROM Meter_Measure Where LS='"+LS+"'"
-		print(sql)
+		sql="SELECT id_meter, LS, Number, value, value_old, Service  FROM Meter_Measure Where LS='"+LS+"'"
+		# print(sql)
 		# работаем с базой
 		with con:
 			# выполняем запрос к базе
@@ -125,9 +126,8 @@ def Find_LS(message):
 				# формируем строку в общем отчёте
 				s += "id_meter:           {0}\nЛицевой счет: {1}\nНомер ИПУ:      {2}\nТек.показ-я:    {3}\nПред.показ-я: {4}\n\n".format(row[0], row[1], row[2], row[3], row[4])
 				#keyboard.add(InlineKeyboardButton(text=row[2], callback_data=row[2]))
-				button=InlineKeyboardButton(text=row[2], callback_data=row[2])
+				button=InlineKeyboardButton(text='№'+row[2]+'\n'+'Услуга: '+row[5]+'\nПосл. показ.: '+str(row[3]), callback_data=row[0])
 				keyboard.add(button)
-						
 		# если нет данных
 		if s == '':
 			# формируем новое сообщение
