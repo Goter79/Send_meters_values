@@ -116,7 +116,7 @@ def Find_LS(message):
 		s = ''
 		LS=str(message.text) 
 		sql="SELECT id_meter, LS, Number, value, value_old  FROM Meter_Measure Where LS='"+LS+"'"
-		#print(sql)
+		print(sql)
 		# работаем с базой
 		with con:
 			# выполняем запрос к базе
