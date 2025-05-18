@@ -1,6 +1,7 @@
 # подключаем модуль для Телеграма
 import telebot
 from telebot import types
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 # модуль работы со временем
 from datetime import datetime, timezone, timedelta
 # модуль для работы с базой данных
@@ -55,26 +56,43 @@ def start(message):
     
 
 # обрабатываем команду /ListIPU, получение списка счетчиков
+@bot.message_handler(commands=['Key'])
+def Keybord(message):
+	markup_inline = types.InlineKeyboardMarkup().add(
+        types.InlineKeyboardButton(text='📱Купить номер', callback_data='buynumber'),
+        types.InlineKeyboardButton(text='💰Пополнить баланс', callback_data='balance')).add(
+        types.InlineKeyboardButton(text='🌎Cтрана/Оператор', callback_data='country'),
+        types.InlineKeyboardButton(text='🎉Мультисервис', callback_data='myltis')).add(
+        types.InlineKeyboardButton(text='📚История покупок', callback_data='history')).add(
+        types.InlineKeyboardButton(text='🎃Профиль', callback_data='prof'))	
+	bot.send_message(
+        message.chat.id,
+        'Выбери что тебе интересно',
+        reply_markup=markup_inline)
+    
+
+# обрабатываем команду /ListIPU, получение списка счетчиков
 @bot.message_handler(commands=['List_IPU'])
 def List_IPU(message):
-    bot.send_message(message.from_user.id, message.text)
+    bot.send_message(message.from_user.id, 'Список ИПУ')
     # подключаемся к базе
     con = sl.connect('reports.db')   
     
-    # пустая строка для будущих отчётов
+    # пустая строка для данных
     s = ''
+    sql="SELECT id_meter, LS, Number, value, value_old  FROM Meter_Measure"
+    print(sql)
      # работаем с базой
+     
     with con:
         # выполняем запрос к базе
-        data = con.execute('SELECT id_meter, LS, Number, value, value_old  FROM Meter_Measure').fetchall()
+        data = con.execute(sql).fetchall()
         # перебираем все результаты
+        
         for row in data:
             # формируем строку в общем отчёте
-            #s = s +  ' id_meter ->' + str(row[0])+\
-            #         '\n LS ->' + row[1]+  '\n Number ->' + row[2] +  '\n value ->' + str(row[3]) +  '\n value_old ->' + str(row[4])  + '\n\n'
              s += "id_meter:           {0}\nЛицевой счет: {1}\nНомер ИПУ:      {2}\nТек.показ-я:    {3}\nПред.показ-я: {4}\n\n".format(row[0], row[1], row[2], row[3], row[4])
-
-            
+             
             
     # если нет данных
     if s == '':
@@ -83,7 +101,45 @@ def List_IPU(message):
     # отправляем общий отчёт обратно в телеграм
     #bot.send_message(message.from_user.id, s, parse_mode='Markdown')
     bot.send_message(message.from_user.id, s)
+    con.close()
     
+# список ИПУ по ЛС
+def Find_LS(message):
+	if message.text.isdigit():
+		#bot.send_message(message.from_user.id, "Список ИПУ по ЛС:"+message.text)
+		# подключаемся к базе
+		con = sl.connect('reports.db')   
+
+		keyboard = types.InlineKeyboardMarkup() #Инлайн клавиатура
+		# keyboard.row_width = 2	
+		# пустая строка для данных
+		s = ''
+		LS=str(message.text) 
+		sql="SELECT id_meter, LS, Number, value, value_old  FROM Meter_Measure Where LS='"+LS+"'"
+		#print(sql)
+		# работаем с базой
+		with con:
+			# выполняем запрос к базе
+			data = con.execute(sql).fetchall()
+			for row in data:
+				# формируем строку в общем отчёте
+				s += "id_meter:           {0}\nЛицевой счет: {1}\nНомер ИПУ:      {2}\nТек.показ-я:    {3}\nПред.показ-я: {4}\n\n".format(row[0], row[1], row[2], row[3], row[4])
+				#keyboard.add(InlineKeyboardButton(text=row[2], callback_data=row[2]))
+				button=InlineKeyboardButton(text=row[2], callback_data=row[2])
+				keyboard.add(button)
+						
+		# если нет данных
+		if s == '':
+			# формируем новое сообщение
+			s = 'Нет данных'
+		# отправляем общий отчёт обратно в телеграм
+		
+		bot.send_message(message.from_user.id, text="Список ИПУ по ЛС: "+message.text, reply_markup = keyboard)
+		con.close()
+	else:
+		bot.send_message(message.from_user.id, 'Введите 9 цифр')
+		bot.send_message(message.from_user.id, "Введите номер лицевого счета")
+		bot.register_next_step_handler(message,Find_LS)
     
 
 # обрабатываем команду /Add_IPU, добавление счетчика в БД
@@ -103,87 +159,23 @@ def Add_IPU(message):
     # добавляем с помощью запроса данные
     with con:
         con.executemany(sql, data)
+        con.commit()
     # отправляем пользователю сообщение о том, что отчёт принят
     bot.send_message(message.from_user.id, 'Принято, спасибо!', parse_mode='Markdown')
-                           
-
-# обрабатываем команду /now
-@bot.message_handler(commands=['now'])
-def start(message):
-    # подключаемся к базе
-    con = sl.connect('reports.db')   
-    # получаем сегодняшнюю дату
-    now = datetime.now(timezone.utc)
-    date = now.date()
-    # пустая строка для будущих отчётов
-    s = ''
-     # работаем с базой
-    with con:
-        # выполняем запрос к базе
-        data = con.execute('SELECT * FROM reports WHERE date = :Date;',{'Date': str(date)})
-        # перебираем все результаты
-        for row in data:
-            # формируем строку в общем отчёте
-            s = s + '*' + row[3] + '*' + ' → ' + row[4] + '\n\n'
-    # если отчётов не было за сегодня
-    if s == '':
-        # формируем новое сообщение
-        s = 'За сегодня ещё нет записей'
-    # отправляем общий отчёт обратно в телеграм
-    bot.send_message(message.from_user.id, s, parse_mode='Markdown')
-
-# обрабатываем команду /yesterday
-@bot.message_handler(commands=['yesterday'])
-def start(message):
-    # подключаемся к базе
-    con = sl.connect('reports.db')
-    # получаем вчерашнюю дату
-    yesterday = datetime.today() - timedelta(days=1)
-    y_date = yesterday.date()
-    # пустая строка для будущих отчётов
-    s = ''
-    # работаем с базой
-    with con:
-        # выполняем запрос
-        data = con.execute('SELECT * FROM reports WHERE date = :Date;',{'Date': str(y_date)})
-        # смотрим на результат
-        for row in data:
-            # если результат пустой — ничего не делаем
-            if row[0] == 0:
-                pass
-            # если вчера были какие-то отчёты
-            else:
-                # добавляем их в общий список отчётов 
-                s = s + '*' + row[3] + '*' + ' → ' + row[4] + '\n\n'
-    # если отчётов не было за вчера
-    if s == '':
-        # формируем новое сообщение
-        s = 'За вчерашний день нет записей'
-    # отправляем пользователю это новое сообщение 
-    bot.send_message(message.from_user.id, s, parse_mode='Markdown')
 
 # обрабатываем что пишет чел
 @bot.message_handler(content_types=['text'])
 def func(message):
     if message.text == 'Подать показания':
         bot.send_message(message.from_user.id, "Введите номер лицевого счета");
-        bot.register_next_step_handler(message,List_IPU)
-        bot.register_next_step_handler(message, get_LS);
+        bot.register_next_step_handler(message,Find_LS)
     else:
-        bot.send_message(message.from_user.id, "dd");
-'''
-    if message.text.isdigit():
-       bot.register_next_step_handler(message,List_IPU)
-    else:
-        bot.send_message(message.from_user.id, 'Неверный ввод.')
-        bot.register_next_step_handler(message, get_age);
-'''
+        bot.send_message(message.from_user.id, "Выбирите команду");
+
 def get_LS(message): #ищем ЛС
     
     LS = message.text;
     #тут ищем лс и выводим все ИПУ
-    
-    
     bot.send_message(message.from_user.id, "Выбирите Ваш счетчик");
     bot.register_next_step_handler(message, get_IPU);
 
@@ -192,35 +184,7 @@ def get_IPU(message): #Выводим счетчик
     IPU = message.text;
     bot.send_message(message.from_user.id, "Дальше");
     #bot.register_next_step_handler(message, get_sname);
-    
-        
-        
-'''    
-    # подключаемся к базе
-    con = sl.connect('reports.db')
-    # подготавливаем запрос
-    sql = 'INSERT INTO reports (datetime, date, id, name, text) values(?, ?, ?, ?, ?)'
-    # получаем дату и время
-    now = datetime.now(timezone.utc)
-    # и просто дату
-    date = now.date()
-    # формируем данные для запроса
-    data = [
-        (str(now), str(date), str(message.from_user.id), str(message.from_user.username), str(message.text[:500]))
-    ]
-    # добавляем с помощью запроса данные
-    with con:
-        con.executemany(sql, data)
-    # отправляем пользователю сообщение о том, что отчёт принят
-    bot.send_message(message.from_user.id, 'Принято, спасибо!', parse_mode='Markdown')
-'''
-# создание клавиатуры
-@bot.message_handler(commands=['keyboard'])
-def handle_keyboard(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    item = types.KeyboardButton("/start" )
-    markup.add(item)
-    bot.send_message(message.chat.id, "Выберите опцию:", reply_markup=markup)
+
 ''' 
 # перезапуск бота
 @bot.message_handler(commands=["restart"]) #вызов по команде /restart; можно сделать и на кнопку
@@ -239,4 +203,4 @@ if __name__ == '__main__':
             bot.polling(none_stop=True, interval=0)
         # если возникла ошибка — сообщаем про исключение и продолжаем работу
         except Exception as e: 
-            print('❌❌❌❌❌ Сработало исключение! ❌❌❌❌❌')
+            print('❌❌❌❌❌ Сработало исключение! ❌❌❌❌❌'+e)
