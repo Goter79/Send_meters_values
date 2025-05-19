@@ -52,10 +52,11 @@ def start(message, page=1, previous_message=None):
         msg  = f"Название: *{title}*\nОписание: "
         msg += f"*{description}*\n" if description != None else '_нет_\n'
 
-        bot.send_message(message.chat.id, msg, reply_markup=buttons)
+        # bot.send_message(message.chat.id, msg, reply_markup=buttons)
+        bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.id, reply_markup=markup)        
 
-    try: bot.delete_message(message.chat.id, previous_message.id)
-    except: pass
+    # try: bot.delete_message(message.chat.id, previous_message.id)
+    # except: pass
 
 
 # Обработчик callback
