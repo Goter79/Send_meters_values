@@ -9,9 +9,6 @@ import sqlite3 as sl
 from config import TOKEN;
 import os #импортируем модуль "os"
 
-bot = telebot.TeleBot(TOKEN);
-
-
 # указываем токен для доступа к боту
 bot = telebot.TeleBot(TOKEN)
 
@@ -115,8 +112,9 @@ def Find_LS(message):
         
 		# пустая строка для данных
 		s = ''
+		sService=''
 		LS=str(message.text) 
-		sql="SELECT id_meter, LS, Number, value, value_old, Service  FROM Meter_Measure Where LS='"+LS+"'"
+		sql="SELECT id_meter, LS, Number, value, value_old, Service  FROM Meter_Measure Where LS='"+LS+"' order by Service"
 		# print(sql)
 		# работаем с базой
 		with con:
@@ -126,7 +124,11 @@ def Find_LS(message):
 				# формируем строку в общем отчёте
 				s += "id_meter:           {0}\nЛицевой счет: {1}\nНомер ИПУ:      {2}\nТек.показ-я:    {3}\nПред.показ-я: {4}\n\n".format(row[0], row[1], row[2], row[3], row[4])
 				#keyboard.add(InlineKeyboardButton(text=row[2], callback_data=row[2]))
-				button=InlineKeyboardButton(text='№'+row[2]+'\n'+'Услуга: '+row[5]+'\nПосл. показ.: '+str(row[3]), callback_data=row[0])
+				if sService != row[5]:
+					button=InlineKeyboardButton(text="*Услуга*"+row[5], callback_data=row[5])
+					# bot.send_message(message.from_user.id, text="<b>Услуга<\b>"+row[5], reply_markup = keyboard)
+					keyboard.add(button)
+				button=InlineKeyboardButton(text='№'+row[2]+'\n'+'\nПосл. показ.: '+str(row[3]), callback_data=row[0])
 				keyboard.add(button)
 		# если нет данных
 		if s == '':
