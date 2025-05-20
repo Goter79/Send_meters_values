@@ -26,7 +26,7 @@ class Database:
                         from t ts 
                         cross join t t1 on t1.id_meter="""+id_meter+"""
                        Where ts.rn-t1.rn BETWEEN -1 and 1 """
-        print(sql)
+        # print(sql)
       
         self.cursor.execute(sql)
         res = self.cursor.fetchall()
