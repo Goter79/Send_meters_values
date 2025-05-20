@@ -28,10 +28,11 @@ def callback_query(call):
 ## второй массив это start mid end  - айдишники ИПУ относительно текущего ИПУ с сортировкой (LS+Service+id_meter)
 ## как то написать запрос который вернет эти данные
 
-        sqlTransaction = database.listColledjeForPage(tables='organization', order='title', Page=page,
-                                                      SkipSize=1)  # SkipSize - т.к я буду отображать по одной записи
+        # sqlTransaction = database.listColledjeForPage(tables='organization', order='title', Page=page,
+        #                                               SkipSize=1)  # SkipSize - т.к я буду отображать по одной записи
+        sqlTransaction = database.listColledjeForPage(tables='Meter_Measure', wheres=" where LS='010035140' ", id_meter ="")
         data = sqlTransaction[0][0]
-        count = sqlTransaction[2]
+        count = sqlTransaction[1]
 
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton(text='Скрыть', callback_data='unseen'))
