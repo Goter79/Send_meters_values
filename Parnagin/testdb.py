@@ -1,141 +1,104 @@
 import json
-import telebot;
+import sqlite3 as sl
 from telebot.types import  ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from database import Database
-from config import TOKEN;
+from button import button_whith_IPU
+from bot import bot # Импортируем объект бота
 
 database = Database()
-
-bot = telebot.TeleBot(TOKEN)
-
+start_txt = 'Приветствуем Вас! Это официальный бот компании ООО ГУК-Краснодар. \n\n Тут Вы можете передать показания по своим индивидуальным приборам учета'
 
 @bot.callback_query_handler(func=lambda call:True)
 def callback_query(call):
     req = call.data.split('_')
 
-    if req[0] == 'unseen':
+    if 'addVol' in req[0]:
         bot.delete_message(call.message.chat.id, call.message.message_id)
-    elif 'SetLS' in req[0]:        
-          SetLS(call.message.chat.id)  
+
+        json_string = json.loads(req[0])
+        id_meter = json_string['idmeter']
+        LS = json_string['LS']
+        sqlTransaction = database.listColledjeForPage(tables='Meter_Measure', wheres=" where LS='"+LS+"' ", id_meter=id_meter)
+        tt=button_whith_IPU(call.message, sqlTransaction)
+        markup=tt[0]
+        Meter=tt[1]
+        
+        bot.send_message(call.message.chat.id,
+                                        f'<b>Введите показания по выбранному ИПУ:</b>\n\n'
+                                        f'Лицевой счет          :<b>{Meter[3]}</b>\n\n'
+                                        f'Улуга                 :<b>{Meter[4]}</b>\n'
+                                        f'Номер ИПУ             :<b>{Meter[5]}</b>\n'
+                                        f'Предыдущие показания  :<b>{str(Meter[6])}</b>\n'
+                                        f'Текущие показания     :<b>{str(Meter[7])}</b>',
+                              parse_mode="HTML")
+        # bot.send_message(call.message.chat.id, f'<b>Введите показания по ИПУ:</b>', parse_mode="HTML")
+        # далее запускаем обработчик введенных показаний
+         
+    elif req[0] == 'SetLS':
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        # markup = InlineKeyboardMarkup()
+        # SetLS(markup)  
+        bot.send_message(call.message.chat.id, f'<b>Введите Лицевой счет:</b>', parse_mode="HTML")
+        bot.register_next_step_handler(call.message,Find_LS)
+        # bot.send_message(call.message.from_user.id, "Введите номер лицевого счета");
+        # bot.register_next_step_handler(call.message,Find_LS)
+        
+
+
     elif 'pagination' in req[0]:
         json_string = json.loads(req[0])
         id_meter = json_string['idmeter']
         LS = json_string['LS']
         sqlTransaction = database.listColledjeForPage(tables='Meter_Measure', wheres=" where LS='"+LS+"' ", id_meter=id_meter)
+        tt=button_whith_IPU(call.message, sqlTransaction)
+        markup=tt[0]
+        Meter=tt[1]
         
-        data = sqlTransaction
-        countmass=data[1]       # Количество счетчиков в массиве
-        count = data[2]   # Общее количество счетчиков в запросе
-        
-        # print(data)
+        bot.edit_message_text(
+                                        f'Лицевой счет        :<b>{Meter[3]}</b>\n\n'
+                                        f'Улуга               :<b>{Meter[4]}</b>\n'
+                                        f'Номер ИПУ           :<b>{Meter[5]}</b>\n'
+                                        f'Предыдущие показания:<b>{str(Meter[6])}</b>\n'
+                                        f'Текущие показания   :<b>{str(Meter[7])}</b>',
+                              parse_mode="HTML",reply_markup = markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
 
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(text='Передать показания', callback_data='unseen'))
+# список ИПУ по ЛС  
+def Find_LS(message):
+    if message.text.isdigit():
+        sqlTransaction = database.listColledjeForPage(tables='Meter_Measure', wheres=" where LS='"+message.text+"' ", id_meter='')
 
-        
-        if countmass==3:
-            id_meter_next=data[0][2][2] # id_meter следующего счетчика
-            id_meter_prev=data[0][0][2] # id_meter следующего счетчика
-            Meter=data[0][1]            # счетчик
-            page=Meter[1]          # номер счетчика в массиве data
-            LS=Meter[3] 
+        if sqlTransaction[1] !=0:
+            tt=button_whith_IPU(message, sqlTransaction)
+            markup=tt[0]
+            Meter=tt[1]
 
-            
-            markup.add (InlineKeyboardButton(text=f'⬅️ Назад', callback_data="{\"method\":\"pagination\",\"LS\":"+'"'+  LS + '"'+",\"idmeter\":"+'"' + str(id_meter_prev) +'"'+ "}"),
-                        InlineKeyboardButton(text=f'{page}/{count}', callback_data=f' '),
-                        InlineKeyboardButton(text=f'Вперёд ➡️', callback_data="{\"method\":\"pagination\",\"LS\":"+'"'+  LS + '"'+",\"idmeter\":"+'"' + str(id_meter_next) +'"'+ "}"))
-
-        elif countmass==2:  
-            if data[0][0][0] == 0: #первый счетчик   
-                Meter=data[0][0]            # счетчик
-                page=Meter[1]          # номер счетчика в массиве data
-                LS=Meter[3] 
-                id_meter_next=data[0][1][2] # id_meter следующего счетчика
-                markup.add (InlineKeyboardButton(text=f'{page}/{count}', callback_data=f' '),
-                            InlineKeyboardButton(text=f'Вперёд ➡️', callback_data="{\"method\":\"pagination\",\"LS\":"+'"'+  LS + '"'+",\"idmeter\":"+'"' + str(id_meter_next) +'"'+ "}"))
-            else:                 #последний счетчик
-                id_meter_prev=data[0][0][2] # id_meter предыдущего счетчика
-                Meter=data[0][1]            # счетчик
-                page=Meter[1]          # номер счетчика в массиве data
-                LS=Meter[3] 
-                markup.add (InlineKeyboardButton(text=f'⬅️ Назад', callback_data="{\"method\":\"pagination\",\"LS\":"+'"'+  LS + '"'+",\"idmeter\":"+'"' + str(id_meter_prev) +'"'+ "}"),
-                            InlineKeyboardButton(text=f'{page}/{count}', callback_data=f' '))
-
-        else: # один счетчик
-            markup.add (InlineKeyboardButton(text=f'{page}/{count}', callback_data=f' '))
-
-        # if page == 1:
-        #     markup.add(InlineKeyboardButton(text=f'{page}/{count}', callback_data=f' '),
-        #             InlineKeyboardButton(text=f'Вперёд --->',
-        #                                     callback_data="{\"method\":\"pagination\",\"NumberPage\":" + str(
-        #                                         page + 1) + ",\"CountPage\":" + str(count) + "}"))
-        # elif page == count:
-        #     markup.add(InlineKeyboardButton(text=f'<--- Назад',
-        #                                     callback_data="{\"method\":\"pagination\",\"NumberPage\":" + str(
-        #                                         page - 1) + ",\"CountPage\":" + str(count) + "}"),
-        #             InlineKeyboardButton(text=f'{page}/{count}', callback_data=f' '))
-        # else:
-        #     markup.add(InlineKeyboardButton(text=f'<--- Назад', callback_data="{\"method\":\"pagination\",\"NumberPage\":" + str(page-1) + ",\"CountPage\":" + str(count) + "}"),
-        #                 InlineKeyboardButton(text=f'{page}/{count}', callback_data=f' '),
-        #                 InlineKeyboardButton(text=f'Вперёд --->', callback_data="{\"method\":\"pagination\",\"NumberPage\":" + str(page+1) + ",\"CountPage\":" + str(count) + "}"))
-        markup.add(InlineKeyboardButton(text='Выбрать другой лицевой', callback_data='SetLS'))            
-        bot.edit_message_text(f'<b>Лицевой счет:{LS}</b>\n\n'
-                                f'<b>Улуга:</b><i>{Meter[4]}</i>\n'
-                                f'<b>Номер: ИПУ</b><i> {Meter[5]}</i>',
-                                parse_mode="HTML",reply_markup = markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
-
-# Выбор ЛС
-def SetLS(message):
-    # sqlTransaction = database.listColledjeForPage(tables='Meter_Measure', wheres=" where LS='100093000' ")
-
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton(text='1', callback_data='k1'),
-               InlineKeyboardButton(text='2', callback_data='k2'),
-               InlineKeyboardButton(text='3', callback_data='k3'))
-    
-    bot.send_message(message.from_user.id, f'<b>Введите Лицевой счет:</b>', parse_mode="HTML", reply_markup = markup)
-
+            bot.send_message(message.from_user.id,
+                                        f'Лицевой счет			:<b>{Meter[3]}</b>\n\n'
+                                        f'Улуга					:<b>{Meter[4]}</b>\n'
+                                        f'Номер ИПУ				:<b>{Meter[5]}</b>\n'
+                                        f'Предыдущие показания	:<b>{str(Meter[6])}</b>\n'
+                                        f'Текущие показания   	:<b>{str(Meter[7])}</b>',
+                                        parse_mode="HTML", reply_markup = markup)
+        else:
+            bot.send_message(message.from_user.id, f'Не найден лицевой счет!!!\n\nВведите 9 цифр\n Введите номер лицевого счета')
+            bot.register_next_step_handler(message,Find_LS)
+    else:
+        bot.send_message(message.from_user.id, f'Введите 9 цифр\n Введите номер лицевого счета')
+        bot.register_next_step_handler(message,Find_LS)
 
 # обрабатываем старт бота
-# @bot.message_handler(commands=['start'])
-@bot.message_handler(content_types=['text'])
+@bot.message_handler(commands=['start'])
 def start(message):
-    sqlTransaction = database.listColledjeForPage(tables='Meter_Measure', wheres=" where LS='100093000' ")
-        
-    #0 r,
-    #1 rn, номер по порядку
-    #d_meter,
-    #LS,
-    #Service,
-    #Number,
-    #value,
-    #value_old,
-    #LastUpdate,
-    #id_user
+    markup_reply = ReplyKeyboardMarkup(resize_keyboard=True).add(
+        "Подать показания", "Помощь", "👀 Наш канал")
+    bot.send_message(message.chat.id, start_txt, reply_markup=markup_reply)
 
-    data = sqlTransaction
-    # print(data)
-    id_meter_next=data[0][1][2] # id_meter следующего счетчика
-    Meter=data[0][0]            # счетчик
-    LS=Meter[3]
-    
-    page=Meter[1]          # номер счетчика в массиве data
-    count = sqlTransaction[2]   # Общее количество счетчиков в запросе
-    
-    # print(Meter)
-    
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton(text='Передать показания', callback_data='unseen'))
-    
-    markup.add(InlineKeyboardButton(text=f'{page}/{count}', callback_data=f' '),
-               InlineKeyboardButton(text=f'Вперед ➡️', callback_data="{\"method\":\"pagination\",\"LS\":"+'"'+  LS + '"'+",\"idmeter\":"+'"' + str(id_meter_next) +'"'+ "}"))
-    
-    markup.add(InlineKeyboardButton(text='Выбрать другой лицевой', callback_data='SetLS'))
-    
-    bot.send_message(message.from_user.id, f'<b>Лицевой счет:{LS}</b>\n\n'
-                                    f'<b>Улуга:</b><i>{Meter[4]}</i>\n'
-                                    f'<b>Номер: ИПУ</b><i> {Meter[5]}</i>',
-                     parse_mode="HTML", reply_markup = markup)
+@bot.message_handler(content_types=['text'])
+def go_vvod(message):
+    if message.text == "Подать показания": 
+        bot.send_message(message.from_user.id, f'Введите номер лицевого счета\n Введите 9 цифр',)
+        bot.register_next_step_handler(message,Find_LS)
+
 
 # запускаем бота
 if __name__ == '__main__':

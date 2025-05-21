@@ -34,5 +34,6 @@ class Database:
         sql="select count(*) from "+tables+" "+wheres
         self.cursor.execute(sql)
         count = self.cursor.fetchone()[0]
-        
+        # self.con.close()
+
         return res, len(res), count
