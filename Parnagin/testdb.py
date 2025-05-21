@@ -24,12 +24,12 @@ def callback_query(call):
         Meter=tt[1]
         
         bot.send_message(call.message.chat.id,
-                                        f'<b>Введите показания по выбранному ИПУ:</b>\n\n'
-                                        f'Лицевой счет          :<b>{Meter[3]}</b>\n\n'
+                                        f'<code><b>Введите показания по выбранному ИПУ:</b>\n\n'
+                                        f'<p>Лицевой счет:</p><p><b>{Meter[3]}</b></p>\n\n'
                                         f'Улуга                 :<b>{Meter[4]}</b>\n'
                                         f'Номер ИПУ             :<b>{Meter[5]}</b>\n'
                                         f'Предыдущие показания  :<b>{str(Meter[6])}</b>\n'
-                                        f'Текущие показания     :<b>{str(Meter[7])}</b>',
+                                        f'Текущие показания     :<b>{str(Meter[7])}</b></code>',
                               parse_mode="HTML")
         # bot.send_message(call.message.chat.id, f'<b>Введите показания по ИПУ:</b>', parse_mode="HTML")
         # далее запускаем обработчик введенных показаний
@@ -73,11 +73,11 @@ def Find_LS(message):
             Meter=tt[1]
 
             bot.send_message(message.from_user.id,
-                                        f'Лицевой счет			:<b>{Meter[3]}</b>\n\n'
+                                        f'<code>Лицевой счет			:<b>{Meter[3]}</b>\n\n'
                                         f'Улуга					:<b>{Meter[4]}</b>\n'
                                         f'Номер ИПУ				:<b>{Meter[5]}</b>\n'
                                         f'Предыдущие показания	:<b>{str(Meter[6])}</b>\n'
-                                        f'Текущие показания   	:<b>{str(Meter[7])}</b>',
+                                        f'Текущие показания   	:<b>{str(Meter[7])}</b></code>',
                                         parse_mode="HTML", reply_markup = markup)
         else:
             bot.send_message(message.from_user.id, f'Не найден лицевой счет!!!\n\nВведите 9 цифр\n Введите номер лицевого счета')

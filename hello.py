@@ -9,15 +9,35 @@ bot = TeleBot(TOKEN)
 @bot.message_handler(commands=['start'])
 def start(message,previous_message=None):
 
-    try: bot.delete_message(message.chat.id, previous_message.id)
-    except: pass
+                                text =  '<b>bold</b>, <strong>bold</strong> '  \
+                                        '<i>italic</i>, <em>italic</em>'  \
+                                        '<u>underline</u>, <ins>underline</ins>'  \
+                                        '<s>strikethrough</s>, <strike>strikethrough</strike>, <del>strikethrough</del>'  \
+                                        '<span class="tg-spoiler">spoiler</span>, <tg-spoiler>spoiler</tg-spoiler>'  \
+                                        '<b>bold <i>italic bold <s>italic bold strikethrough <span class="tg-spoiler">italic bold strikethrough spoiler</span></s> <u>underline italic bold</u></i> bold</b>'  \
+                                        '<a href="http://www.example.com/">inline URL</a>'  \
+                                        '<a href="tg://user?id=123456789">inline mention of a user</a>'  \
+                                        '<code>inline fixed-width code</code>'  \
+                                        '<pre>pre-formatted fixed-width code block</pre>'  \
+                                        '<pre><code class="language-python">pre-formatted fixed-width code block written in the Python programming language</code></pre>>'
+                                bot.send_message(chat_id=message.chat.id, text=text, parse_mode='HTML')
 
-    markup = InlineKeyboardMarkup()
-    btn1 = InlineKeyboardButton("<b>Кнопка 1</b>", callback_data='btn1')
-    btn2 = InlineKeyboardButton("<i>Кнопка 2</i>", callback_data='btn2')
-    key_b = InlineKeyboardButton(text='1123 👌', callback_data='1123')    
-    markup.add(btn1, btn2, key_b)
-    bot.send_message(message.chat.id, "Выбери кнопку:", reply_markup=markup)
+
+    # text = "Левый столбец:\n" + \
+    #     "  * Пункт 1\n" + \
+    #     "  * Пункт 2\n\n" + \
+    #     "Правый столбец:\n" + \
+    #     "  * Пункт 3\n" + \
+    #     "  * Пункт 4"
+
+    # bot.send_message(chat_id=message.chat.id, text=text, parse_mode='Markdown')
+
+    # markup = InlineKeyboardMarkup()
+    # btn1 = InlineKeyboardButton("<b>Кнопка 1</b>", callback_data='btn1')
+    # btn2 = InlineKeyboardButton("<i>Кнопка 2</i>", callback_data='btn2')
+    # key_b = InlineKeyboardButton(text='1123 👌', callback_data='1123')    
+    # markup.add(btn1, btn2, key_b)
+    # bot.send_message(message.chat.id, format_text( mbold('Hello'),    mitalic('World')), reply_markup=markup, parse_mode="HTML")
 
 
 

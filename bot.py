@@ -15,6 +15,7 @@ def start(message):
     else:
         bot.send_message(message.from_user.id, "Напиши /reg");
 
+
 def get_name(message): #получаем фамилию
     global name;
     name = message.text;
