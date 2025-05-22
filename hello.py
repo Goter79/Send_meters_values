@@ -5,24 +5,36 @@ from config import TOKEN;
 # Замените TOKEN на ваш токен
 bot = TeleBot(TOKEN)
 
-
+Meter=[1,1,1,'1111111', 'хвс', '344232', 111, 112]
 @bot.message_handler(commands=['start'])
 def start(message,previous_message=None):
 
-                                text =  '<b>bold</b>, <strong>bold</strong> '  \
-                                        '<i>italic</i>, <em>italic</em>'  \
-                                        '<u>underline</u>, <ins>underline</ins>'  \
-                                        '<s>strikethrough</s>, <strike>strikethrough</strike>, <del>strikethrough</del>'  \
-                                        '<span class="tg-spoiler">spoiler</span>, <tg-spoiler>spoiler</tg-spoiler>'  \
-                                        '<b>bold <i>italic bold <s>italic bold strikethrough <span class="tg-spoiler">italic bold strikethrough spoiler</span></s> <u>underline italic bold</u></i> bold</b>'  \
-                                        '<a href="http://www.example.com/">inline URL</a>'  \
-                                        '<a href="tg://user?id=123456789">inline mention of a user</a>'  \
-                                        '<code>inline fixed-width code</code>'  \
-                                        '<pre>pre-formatted fixed-width code block</pre>'  \
-                                        '<pre><code class="language-python">pre-formatted fixed-width code block written in the Python programming language</code></pre>>'
+                                
+                                text =  f'<code>Лицевой счет:       </code><b>{Meter[3]}</b>\n\n' \
+                                        f'<code>Улуга:              </code><b>{Meter[4]}</b>\n' \
+                                        f'<code>Номер ИПУ:          </code><b>{Meter[5]}</b>\n' \
+                                        f'<code>Пред-щие показания: </code><b>{str(Meter[6])}</b>\n' \
+                                        f'<code>Текущие показания:  </code><b>{str(Meter[7])}</b>', 
                                 bot.send_message(chat_id=message.chat.id, text=text, parse_mode='HTML')
 
+                                # bot.send_message(chat_id=message.chat.id, text='__Нижнее подчёркивание__', parse_mode='MarkdownV2')
+                                # # text="*bold* _italic_ `fixed width font` [link](http://google.com)\.", 
+                                # markdown =  f'Лицевой счет:               *{Meter[5]}*\n\n' \
+                                #             f'Услуга:                     *{Meter[5]}*\n' \
+                                #             f'Номер ИПУ:                  *{Meter[5]}*\n' \
+                                #             f'Предыдущие показания:       *{str(Meter[6])}*\n'
+                                
+                                # bot.send_message(chat_id=message.chat.id, text=markdown, parse_mode="MarkdownV2")
+    
 
+# Этот хэндлер будет срабатывать на команду "/pre"
+
+@bot.message_handler(commands=['pre'])
+def process_pre_command(message):
+
+        text='``` Предварительно отформатированный текст```\n'
+        bot.send_message(chat_id=message.chat.id, text=text, parse_mode="MarkdownV2")             
+    
     # text = "Левый столбец:\n" + \
     #     "  * Пункт 1\n" + \
     #     "  * Пункт 2\n\n" + \

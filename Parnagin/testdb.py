@@ -24,27 +24,22 @@ def callback_query(call):
         Meter=tt[1]
         
         bot.send_message(call.message.chat.id,
-                                        f'<code><b>Введите показания по выбранному ИПУ:</b>\n\n'
-                                        f'<p>Лицевой счет:</p><p><b>{Meter[3]}</b></p>\n\n'
-                                        f'Улуга                 :<b>{Meter[4]}</b>\n'
-                                        f'Номер ИПУ             :<b>{Meter[5]}</b>\n'
-                                        f'Предыдущие показания  :<b>{str(Meter[6])}</b>\n'
-                                        f'Текущие показания     :<b>{str(Meter[7])}</b></code>',
-                              parse_mode="HTML")
+                                        f'<b>Введите показания по выбранному ИПУ:</b>\n\n'
+										f'<code>Лицевой счет:       </code><b>{Meter[3]}</b>\n\n' \
+										f'<code>Улуга:              </code><b>{Meter[4]}</b>\n' \
+										f'<code>Номер ИПУ:          </code><b>{Meter[5]}</b>\n' \
+										f'<code>Пред-щие показания: </code><b>{str(Meter[6])}</b>\n' \
+										f'<code>Текущие показания:  </code><b>{str(Meter[7])}</b>' ,
+                              			parse_mode="HTML")
+        bot.register_next_step_handler(call.message,UpdateIPU, Meter)
         # bot.send_message(call.message.chat.id, f'<b>Введите показания по ИПУ:</b>', parse_mode="HTML")
         # далее запускаем обработчик введенных показаний
-         
+        
     elif req[0] == 'SetLS':
         bot.delete_message(call.message.chat.id, call.message.message_id)
-        # markup = InlineKeyboardMarkup()
-        # SetLS(markup)  
         bot.send_message(call.message.chat.id, f'<b>Введите Лицевой счет:</b>', parse_mode="HTML")
         bot.register_next_step_handler(call.message,Find_LS)
-        # bot.send_message(call.message.from_user.id, "Введите номер лицевого счета");
-        # bot.register_next_step_handler(call.message,Find_LS)
         
-
-
     elif 'pagination' in req[0]:
         json_string = json.loads(req[0])
         id_meter = json_string['idmeter']
@@ -53,17 +48,49 @@ def callback_query(call):
         tt=button_whith_IPU(call.message, sqlTransaction)
         markup=tt[0]
         Meter=tt[1]
-        
+
         bot.edit_message_text(
-                                        f'Лицевой счет        :<b>{Meter[3]}</b>\n\n'
-                                        f'Улуга               :<b>{Meter[4]}</b>\n'
-                                        f'Номер ИПУ           :<b>{Meter[5]}</b>\n'
-                                        f'Предыдущие показания:<b>{str(Meter[6])}</b>\n'
-                                        f'Текущие показания   :<b>{str(Meter[7])}</b>',
+								f'<code>Лицевой счет:       </code><b>{Meter[3]}</b>\n\n' \
+								f'<code>Улуга:              </code><b>{Meter[4]}</b>\n' \
+								f'<code>Номер ИПУ:          </code><b>{Meter[5]}</b>\n' \
+								f'<code>Пред-щие показания: </code><b>{str(Meter[6])}</b>\n' \
+								f'<code>Текущие показания:  </code><b>{str(Meter[7])}</b>' ,
                               parse_mode="HTML",reply_markup = markup, chat_id=call.message.chat.id, message_id=call.message.message_id)
 
+def UpdateIPU(message,Meter):
+     if message.text.isdigit():
+        id_meter=str(Meter[2])
+        LS=Meter[3]
+        sqlTransaction = database.listColledjeForPage(tables='Meter_Measure', wheres="where id_meter="+id_meter, id_meter=id_meter)
+        
+        # bot.answer_callback_query(message.from_user.id, "Показания по ИПУ "+Meter[5]+" приняты\nНовые показания: "+message.text, show_alert=True)
+        # bot.answer_callback_query(message, "Хорошо", show_alert=True)
+        # bot.reply_to(message, "Хорошо")
+
+        markup = InlineKeyboardMarkup()
+
+        bot.send_message(message.from_user.id, 'fff', timeout=5, markup = markup)
+        
+
+        # print('Редактирование id_meter\n'+sqlTransaction) 
+        # Выводить всплывающее окно (с "ок" или без) и потом выводить карточку ИПУ с текущим ЛС
+        sqlTransaction = database.listColledjeForPage(tables='Meter_Measure', wheres=" where LS='"+LS+"' ", id_meter=id_meter)
+        tt=button_whith_IPU(message, sqlTransaction)
+        markup=tt[0]
+        Meter=tt[1]
+
+        bot.send_message(message.from_user.id,
+                                    f'<code>Лицевой счет:       </code><b>{Meter[3]}</b>\n\n' \
+                                    f'<code>Улуга:              </code><b>{Meter[4]}</b>\n' \
+                                    f'<code>Номер ИПУ:          </code><b>{Meter[5]}</b>\n' \
+                                    f'<code>Пред-щие показания: </code><b>{str(Meter[6])}</b>\n' \
+                                    f'<code>Текущие показания:  </code><b>{str(Meter[7])}</b>' ,
+                                    parse_mode="HTML", reply_markup = markup)
+
+    
 # список ИПУ по ЛС  
 def Find_LS(message):
+    
     if message.text.isdigit():
         sqlTransaction = database.listColledjeForPage(tables='Meter_Measure', wheres=" where LS='"+message.text+"' ", id_meter='')
 
@@ -73,11 +100,11 @@ def Find_LS(message):
             Meter=tt[1]
 
             bot.send_message(message.from_user.id,
-                                        f'<code>Лицевой счет			:<b>{Meter[3]}</b>\n\n'
-                                        f'Улуга					:<b>{Meter[4]}</b>\n'
-                                        f'Номер ИПУ				:<b>{Meter[5]}</b>\n'
-                                        f'Предыдущие показания	:<b>{str(Meter[6])}</b>\n'
-                                        f'Текущие показания   	:<b>{str(Meter[7])}</b></code>',
+                                        f'<code>Лицевой счет:       </code><b>{Meter[3]}</b>\n\n' \
+										f'<code>Улуга:              </code><b>{Meter[4]}</b>\n' \
+										f'<code>Номер ИПУ:          </code><b>{Meter[5]}</b>\n' \
+										f'<code>Пред-щие показания: </code><b>{str(Meter[6])}</b>\n' \
+										f'<code>Текущие показания:  </code><b>{str(Meter[7])}</b>' ,
                                         parse_mode="HTML", reply_markup = markup)
         else:
             bot.send_message(message.from_user.id, f'Не найден лицевой счет!!!\n\nВведите 9 цифр\n Введите номер лицевого счета')
