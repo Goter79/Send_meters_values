@@ -50,6 +50,10 @@ def start(message):
 
     # выводим приветственное сообщение
     #bot.send_message(message.from_user.id, start_txt, parse_mode='Markdown')
+@bot.message_handler(commands=['idUser'])
+def start(message):
+     print(message)
+
     
 
 # обрабатываем команду /ListIPU, получение списка счетчиков
@@ -173,6 +177,7 @@ def func(message):
         bot.register_next_step_handler(message,Find_LS)
     else:
         bot.send_message(message.from_user.id, "Выбирите команду");
+        print(message)
 
 def get_LS(message): #ищем ЛС
     

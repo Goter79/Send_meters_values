@@ -37,3 +37,12 @@ class Database:
         # self.con.close()
 
         return res, len(res), count
+#################################################################################################### 
+    def UpdateIPU(self, Field, volume, wheres=''):
+        sql="Update Meter_Measure Set "+Field+"="+volume+"" \
+            " "+wheres+" "
+        
+        self.cursor.execute(sql)
+        self.con.commit()
+
+        return 1
