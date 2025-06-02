@@ -31,7 +31,7 @@ def callback_query(call):
 										f'<code>Номер ИПУ:          </code><b>{Meter[5]}</b>\n' \
 										f'<code>Пред-щие пок.: </code><b>{str(Meter[6])}</b>\n' \
 										f'<code>Текущие пок.:  </code><b>{str(Meter[7])}</b>' ,
-                              			parse_mode="HTML", reply_markup = markup)
+                              			parse_mode="HTML", reply_markup = markup, protect_content=True)
         
         bot.register_next_step_handler(call.message,UpdateIPU, Meter)
         # bot.send_message(call.message.chat.id, f'<b>Введите показания по ИПУ:</b>', parse_mode="HTML")
@@ -39,7 +39,7 @@ def callback_query(call):
         
     elif req[0] == 'SetLS':
         bot.delete_message(call.message.chat.id, call.message.message_id)
-        bot.send_message(call.message.chat.id, f'<b>Введите Лицевой счет:</b>', parse_mode="HTML")
+        bot.send_message(call.message.chat.id, f'<b>Введите Лицевой счет:</b>', parse_mode="HTML", protect_content=True)
         bot.register_next_step_handler(call.message,Find_LS)
         
     elif 'pagination' in req[0]:
@@ -88,7 +88,7 @@ def UpdateIPU(message,Meter):
         # bot.answer_callback_query(message, "Хорошо", show_alert=True)
         # bot.reply_to(message, "Хорошо")
 
-        bot.send_message(message.from_user.id, 'Вы внесли показания:'+message.text)
+        bot.send_message(message.from_user.id, 'Вы внесли показания:'+message.text, protect_content=True)
 
         # print('Редактирование id_meter\n'+sqlTransaction) 
         # Выводить всплывающее окно (с "ок" или без) и потом выводить карточку ИПУ с текущим ЛС
@@ -96,7 +96,7 @@ def UpdateIPU(message,Meter):
         tt=button_whith_IPU(message, sqlTransaction)
         markup=tt[0]
         Meter=tt[1]
-
+        # bot.answer_callback_query('ddd')
         bot.send_message(message.from_user.id,
                                     f'<code>Лицевой счет:       </code><b>{Meter[3]}</b>\n\n' \
                                     f'<code>Улуга:              </code><b>{Meter[4]}</b>\n' \
@@ -105,7 +105,7 @@ def UpdateIPU(message,Meter):
                                     f'<code>Текущие пок.:  </code><b>{str(Meter[7])}</b>' ,
                                     parse_mode="HTML", reply_markup = markup,allow_sending_without_reply=False, protect_content=True)
     else:
-        bot.send_message(message.from_user.id, 'Введите цифры!!!')
+        bot.send_message(message.from_user.id, 'Введите цифры!!!', protect_content=True)
         bot.register_next_step_handler(message, UpdateIPU, Meter)
 
 
@@ -127,12 +127,12 @@ def Find_LS(message):
 										f'<code>Номер ИПУ:          </code><b>{Meter[5]}</b>\n' \
 										f'<code>Пред-щие пок.: </code><b>{str(Meter[6])}</b>\n' \
 										f'<code>Текущие пок.:  </code><b>{str(Meter[7])}</b>' ,
-                                        parse_mode="HTML", reply_markup = markup)
+                                        parse_mode="HTML", reply_markup = markup, protect_content=True)
         else:
-            bot.send_message(message.from_user.id, f'Не найден лицевой счет!!!\n\nВведите 9 цифр\n Введите номер лицевого счета')
+            bot.send_message(message.from_user.id, f'Не найден лицевой счет!!!\n\nВведите 9 цифр\n Введите номер лицевого счета', protect_content=True)
             bot.register_next_step_handler(message,Find_LS)
     else:
-        bot.send_message(message.from_user.id, f'Введите 9 цифр\n Введите номер лицевого счета')
+        bot.send_message(message.from_user.id, f'Введите 9 цифр\n Введите номер лицевого счета', protect_content=True)
         bot.register_next_step_handler(message,Find_LS)
 
 ################################### обрабатываем старт бота
@@ -140,14 +140,13 @@ def Find_LS(message):
 def start(message):
     markup_reply = ReplyKeyboardMarkup(resize_keyboard=True).add(
         "Подать показания", "Помощь", "👀 Наш канал")
-    bot.send_message(message.chat.id, start_txt, reply_markup=markup_reply)
+    bot.send_message(message.chat.id, start_txt, reply_markup=markup_reply, protect_content=True)
 
 @bot.message_handler(content_types=['text'])
 def go_vvod(message):
     if message.text == "Подать показания": 
-        bot.send_message(message.from_user.id, f'Введите номер лицевого счета\n Введите 9 цифр',)
+        bot.send_message(message.from_user.id, f'Введите номер лицевого счета\n Введите 9 цифр',protect_content=True)
         bot.register_next_step_handler(message,Find_LS)
-
 
 ################################# запускаем бота
 if __name__ == '__main__':
