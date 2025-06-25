@@ -46,3 +46,12 @@ class Database:
         self.con.commit()
 
         return 1
+#################################################################################################### 
+    def voiceLSbyPhone(self,phone='070016880'):
+        sql="SELECT id_account, LS, Address" \
+                "   FROM Account \
+                    order by LS"
+        sql="SELECT name FROM sqlite_master WHERE type='table'"
+        self.cursor.execute(sql)
+        res = self.cursor.fetchall()
+        return res       
